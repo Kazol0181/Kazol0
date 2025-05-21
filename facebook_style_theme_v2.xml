@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<b:template xmlns:b="http://www.google.com/2005/gml/b">
+<html>
+  <head>
+    <b:include data="blog" name="all-head-content"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title><data:blog.pageTitle/></title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #e9ebee;
+      }
+      .header {
+        background: #1877f2;
+        color: white;
+        padding: 12px;
+        font-size: 22px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .feed {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 10px;
+      }
+      .post {
+        background: white;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      }
+      .post img {
+        width: 100%;
+        border-radius: 8px;
+        margin-top: 10px;
+      }
+      .post-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .meta {
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 10px;
+      }
+      .interaction {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 10px;
+        font-size: 14px;
+        color: #555;
+      }
+      .interaction span {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">facebook</div>
+    <div class="feed">
+      <b:loop values="data:posts" var="post">
+        <div class="post">
+          <div class="post-title"><data:post.title/></div>
+          <div class="meta"><data:post.timestamp/></div>
+          <b:if cond="data:post.thumbnailUrl">
+            <img expr:src="data:post.thumbnailUrl" alt="Post Image"/>
+          </b:if>
+          <div><data:post.snippet/></div>
+          <div class="interaction">
+            <span>👍 Like</span>
+            <span>💬 Comment</span>
+            <span>↪️ Share</span>
+          </div>
+        </div>
+      </b:loop>
+    </div>
+  </body>
+</html>
+</b:template>
