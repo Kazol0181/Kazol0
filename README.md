@@ -91,6 +91,16 @@
       cursor: pointer;
       font-size: 14px;
     }
+    .delete-btn {
+      font-size: 10px;
+      background: none;
+      border: none;
+      color: red;
+      position: absolute;
+      top: 4px;
+      right: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -125,49 +135,88 @@
     measurementId: "G-MSH3KSKBTJ"
   };
 
-  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
+  // ইউজার আইড আলাদা করার জন্য (লোকালি রাখা হবে)
+  const userId = localStorage.getItem("userId") || generateUserId();
+  function generateUserId() {
+    const id = "user_" + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("userId", id);
+    return id;
+  }
+
   const messages = document.getElementById("messages");
   const input = document.getElementById("message-input");
+
+  // নোটিফিকেশন পারমিশন
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
 
   function getCurrentTime() {
     const now = new Date();
     return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  function appendMessage(text, type, time) {
+  function appendMessage(key, text, type, time, showDelete = false) {
     const div = document.createElement("div");
     div.className = `message ${type}`;
-    div.innerHTML = `<div>${text}</div><div class="time">${time}</div>`;
+    div.innerHTML = `
+      <div>${text}</div>
+      <div class="time">${time}</div>
+      ${showDelete ? `<button class="delete-btn" onclick="deleteMessage('${key}')">x</button>` : ""}
+    `;
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
+
+    if (type === "received" && document.visibilityState !== "visible") {
+      showNotification("আয়াজ হাসান", text);
+    }
   }
 
   function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
-
     const time = getCurrentTime();
     db.ref("messages").push({
       text,
-      type: "sent",
-      time
+      time,
+      user: userId
     });
-
     input.value = "";
   }
 
-  // Listen for messages
+  function deleteMessage(key) {
+    db.ref("messages/" + key).remove();
+  }
+
   db.ref("messages").on("child_added", (snapshot) => {
     const msg = snapshot.val();
-    appendMessage(msg.text, msg.type, msg.time);
+    const type = msg.user === userId ? "sent" : "received";
+    appendMessage(snapshot.key, msg.text, type, msg.time, msg.user === userId);
+  });
+
+  db.ref("messages").on("child_removed", (snapshot) => {
+    document.querySelectorAll(".message").forEach(div => {
+      if (div.innerHTML.includes(`deleteMessage('${snapshot.key}')`)) {
+        div.remove();
+      }
+    });
   });
 
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") sendMessage();
   });
+
+  function showNotification(title, body) {
+    if (Notification.permission === "granted") {
+      new Notification(title, {
+        body,
+        icon: "https://i.ibb.co/6HYz3mF/profile.jpg"
+      });
+    }
+  }
 </script>
 </body>
 </html>
