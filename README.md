@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>কাজল কবি চ্যটিং বক্স</title>
   <style>
     body {
@@ -70,15 +70,15 @@
   <div class="messages" id="messages"></div>
   <div class="input-area">
     <input type="text" id="messageInput" placeholder="মেসেজ টাইপ করুন..." />
-    <button onclick="sendMessage()">পাঠান</button>
+    <button id="sendButton">পাঠান</button>
   </div>
 </div>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+<!-- Firebase with Modular JavaScript -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-<script>
   const firebaseConfig = {
     apiKey: "AIzaSyDkfW0Yf-9oR64j5GAPuBW_1G-rqGK9cOY",
     authDomain: "kazol-35172.firebaseapp.com",
@@ -90,27 +90,29 @@
     measurementId: "G-ECVXRGP67B"
   };
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const messagesRef = db.ref('messages');
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const messagesRef = ref(db, 'messages');
 
-  function sendMessage() {
-    const input = document.getElementById('messageInput');
+  // পাঠান বাটনের ক্লিক ইভেন্ট
+  document.getElementById("sendButton").addEventListener("click", () => {
+    const input = document.getElementById("messageInput");
     const message = input.value.trim();
     if (message) {
-      messagesRef.push({
+      push(messagesRef, {
         text: message,
         timestamp: Date.now()
       });
-      input.value = '';
+      input.value = "";
     }
-  }
+  });
 
-  messagesRef.on('child_added', snapshot => {
+  // নতুন মেসেজ রিয়েলটাইমে দেখাও
+  onChildAdded(messagesRef, snapshot => {
     const data = snapshot.val();
-    const messagesDiv = document.getElementById('messages');
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('message', 'you');
+    const messagesDiv = document.getElementById("messages");
+    const msgDiv = document.createElement("div");
+    msgDiv.classList.add("message", "you");
     msgDiv.innerText = data.text;
     messagesDiv.appendChild(msgDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -119,4 +121,3 @@
 
 </body>
 </html>
-
