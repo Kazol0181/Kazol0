@@ -92,56 +92,37 @@
       font-size: 14px;
     }
     .delete-btn {
-      font-size: 10px;
-      background: none;
-      border: none;
-      color: red;
       position: absolute;
       top: 4px;
-      right: 10px;
-      cursor: pointer;
-    }
-    .login-screen {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .login-screen button {
-      padding: 12px 20px;
-      font-size: 16px;
-      border: none;
-      background: #db4437;
+      right: 6px;
+      font-size: 10px;
+      background: red;
       color: white;
-      border-radius: 6px;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
+      padding: 2px 5px;
     }
   </style>
 </head>
 <body>
-<div id="app">
-  <div class="login-screen" id="login-screen">
-    <button onclick="signIn()">Google দিয়ে লগইন করুন</button>
+<div class="chat-container">
+  <div class="chat-header">
+    <img src="https://i.ibb.co/6HYz3mF/profile.jpg" />
+    <span id="user-name">লোড হচ্ছে...</span>
   </div>
 
-  <div class="chat-container" style="display:none" id="chat-container">
-    <div class="chat-header">
-      <img id="user-pic" src="" />
-      <span id="user-name">...</span>
-    </div>
-    <div class="chat-messages" id="messages"></div>
-    <div class="chat-input">
-      <input type="text" id="message-input" placeholder="মেসেজ লিখুন..." />
-      <button onclick="sendMessage()">Send</button>
-    </div>
+  <div class="chat-messages" id="messages"></div>
+
+  <div class="chat-input">
+    <input type="text" id="message-input" placeholder="মেসেজ লিখুন..." />
+    <button onclick="sendMessage()">Send</button>
   </div>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDkfW0Yf-9oR64j5GAPuBW_1G-rqGK9cOY",
@@ -156,95 +137,66 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  const auth = firebase.auth();
+  let currentUser = null;
 
-  let currentUser;
-
-  auth.onAuthStateChanged(user => {
+  firebase.auth().onAuthStateChanged(user => {
     if (user) {
       currentUser = user;
-      document.getElementById("login-screen").style.display = "none";
-      document.getElementById("chat-container").style.display = "flex";
-      document.getElementById("user-pic").src = user.photoURL;
-      document.getElementById("user-name").textContent = user.displayName;
+      document.getElementById('user-name').textContent = user.displayName;
       listenForMessages();
+    } else {
+      window.location.href = "index.html"; // redirect to login
     }
   });
-
-  function signIn() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(alert);
-  }
 
   function getCurrentTime() {
     const now = new Date();
     return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  function appendMessage(key, text, type, time, showDelete = false) {
+  function appendMessage(text, type, id) {
     const div = document.createElement("div");
     div.className = `message ${type}`;
     div.innerHTML = `
       <div>${text}</div>
-      <div class="time">${time}</div>
-      ${showDelete ? `<button class="delete-btn" onclick="deleteMessage('${key}')">x</button>` : ""}
+      <div class="time">${getCurrentTime()}</div>
+      ${type === 'sent' ? `<button class="delete-btn" onclick="deleteMessage('${id}')">X</button>` : ''}
     `;
-    document.getElementById("messages").appendChild(div);
-    document.getElementById("messages").scrollTop = messages.scrollHeight;
-
-    if (type === "received" && document.visibilityState !== "visible") {
-      showNotification("আয়াজ হাসান", text);
-    }
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
   }
 
   function sendMessage() {
     const input = document.getElementById("message-input");
     const text = input.value.trim();
-    if (!text) return;
-    const time = getCurrentTime();
-    db.ref("messages").push({
+    if (!text || !currentUser) return;
+
+    const newMsg = db.ref("messages").push();
+    newMsg.set({
       text,
-      time,
       uid: currentUser.uid,
-      name: currentUser.displayName
+      name: currentUser.displayName,
+      time: Date.now()
     });
     input.value = "";
   }
 
-  function deleteMessage(key) {
-    db.ref("messages/" + key).remove();
+  function deleteMessage(id) {
+    db.ref("messages/" + id).remove();
   }
 
   function listenForMessages() {
-    db.ref("messages").on("child_added", (snapshot) => {
-      const msg = snapshot.val();
-      const type = msg.uid === currentUser.uid ? "sent" : "received";
-      appendMessage(snapshot.key, msg.text, type, msg.time, msg.uid === currentUser.uid);
-    });
-
-    db.ref("messages").on("child_removed", (snapshot) => {
-      document.querySelectorAll(".message").forEach(div => {
-        if (div.innerHTML.includes(`deleteMessage('${snapshot.key}')`)) {
-          div.remove();
-        }
-      });
+    db.ref("messages").on("value", snapshot => {
+      const messagesDiv = document.getElementById("messages");
+      messagesDiv.innerHTML = "";
+      const data = snapshot.val();
+      for (let id in data) {
+        const msg = data[id];
+        const type = msg.uid === currentUser.uid ? "sent" : "received";
+        appendMessage(msg.text, type, id);
+      }
     });
   }
-
-  function showNotification(title, body) {
-    if (Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "https://i.ibb.co/6HYz3mF/profile.jpg"
-      });
-    } else {
-      Notification.requestPermission();
-    }
-  }
-
-  document.getElementById("message-input").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendMessage();
-  });
 </script>
 </body>
 </html>
