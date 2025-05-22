@@ -1,161 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Kazolkobi Facebook Clone</title>
+  <title>ফেক চ্যাট</title>
   <style>
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      padding: 0;
       margin: 0;
-      background-color: #f0f2f5;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
     }
-    .topbar {
-      background-color: #1877f2;
-      color: white;
-      padding: 10px 15px;
-    }
-    .topbar input[type="text"] {
-      width: 100%;
-      padding: 6px;
-      border-radius: 6px;
-      border: none;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-    .header {
-      font-size: 24px;
-      font-weight: bold;
-      text-align: center;
-    }
-    .create-post {
+    .chat-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
       background: white;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin: 20px;
     }
-    .profile-area {
+    .chat-header {
+      background: #0084ff;
+      color: white;
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-    .profile-area img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .create-post textarea {
-      width: 100%;
-      border: none;
-      resize: none;
-      font-size: 16px;
-      margin-top: 10px;
-      outline: none;
-    }
-    .create-post input[type="file"] {
-      margin-top: 10px;
-    }
-    .create-post button {
-      width: 100%;
       padding: 10px;
-      background: #1877f2;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      margin-top: 10px;
-      font-size: 16px;
-    }
-    .fake-post {
-      background: white;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin: 20px;
-    }
-    .post-header {
-      display: flex;
-      align-items: center;
       gap: 10px;
     }
-    .post-header img {
-      width: 40px;
-      height: 40px;
+    .chat-header img {
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      object-fit: cover;
     }
-    .name-time {
-      font-size: 14px;
+    .chat-header span {
+      font-weight: bold;
+      font-size: 16px;
     }
-    .uploaded-img {
-      width: 100%;
-      margin-top: 10px;
-      border-radius: 8px;
-    }
-    .reaction-bar {
-      margin-top: 10px;
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .message {
+      max-width: 70%;
+      padding: 10px 14px;
+      border-radius: 18px;
       font-size: 14px;
-      color: #555;
+      line-height: 1.4;
+      position: relative;
     }
-    .reaction-bar span {
-      cursor: pointer;
+    .sent {
+      align-self: flex-end;
+      background: #0084ff;
+      color: white;
+      border-bottom-right-radius: 4px;
     }
-    .liked {
-      color: #1877f2;
+    .received {
+      align-self: flex-start;
+      background: #e4e6eb;
+      color: black;
+      border-bottom-left-radius: 4px;
     }
-    .comment-toggle {
-      background: none;
+    .time {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 4px;
+      text-align: right;
+    }
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      background: white;
+      border-top: 1px solid #ccc;
+      gap: 10px;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    .chat-input button {
+      padding: 10px 16px;
+      border-radius: 20px;
       border: none;
-      color: #1877f2;
+      background: #0084ff;
+      color: white;
       cursor: pointer;
-      padding: 5px 0;
       font-size: 14px;
-    }
-    /* Responsive */
-    @media (max-width: 600px) {
-      .create-post, .fake-post {
-        margin: 10px 5px;
-        padding: 10px;
-      }
-      .topbar input[type="text"] {
-        font-size: 14px;
-        padding: 8px;
-      }
-      .create-post textarea {
-        font-size: 14px;
-      }
     }
   </style>
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 </head>
 <body>
-
-<div class="topbar">
-  <input type="text" placeholder="Search Kazolkobi..." />
-  <div class="header">Kazolkobi</div>
-</div>
-
-<div class="create-post">
-  <div class="profile-area">
-    <img id="profilePicPreview" src="https://i.imgur.com/8Km9tLL.png" alt="Profile" />
-    <input type="text" id="userName" placeholder="Your Name" />
+<div class="chat-container">
+  <div class="chat-header">
+    <img src="https://i.ibb.co/6HYz3mF/profile.jpg" />
+    <span>আয়াজ হাসান</span>
   </div>
-  <textarea id="postText" rows="3" placeholder="What's on your mind?"></textarea>
-  <input type="file" id="profilePicInput" accept="image/*" />
-  <input type="file" id="postImageInput" accept="image/*" />
-  <button onclick="createPost()">Post</button>
+
+  <div class="chat-messages" id="messages"></div>
+
+  <div class="chat-input">
+    <input type="text" id="message-input" placeholder="মেসেজ লিখুন..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
 </div>
 
-<div id="outputPost"></div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyDkfW0Yf-9oR64j5GAPuBW_1G-rqGK9cOY",
     authDomain: "kazol-35172.firebaseapp.com",
@@ -163,190 +121,53 @@
     projectId: "kazol-35172",
     storageBucket: "kazol-35172.appspot.com",
     messagingSenderId: "862146314863",
-    appId: "1:862146314863:web:15d961531d90c23cd6439a",
-    measurementId: "G-ECVXRGP67B"
+    appId: "1:862146314863:web:6f09888dce4bbda6d6439a",
+    measurementId: "G-MSH3KSKBTJ"
   };
+
+  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-  const storage = firebase.storage();
+  const db = firebase.database();
 
-  let profilePicURL = 'https://i.imgur.com/8Km9tLL.png';
-  let postId = 0;
+  const messages = document.getElementById("messages");
+  const input = document.getElementById("message-input");
 
-  // Preview profile pic on select (no upload yet)
-  document.getElementById('profilePicInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function () {
-      profilePicURL = reader.result;
-      document.getElementById('profilePicPreview').src = profilePicURL;
-    }
-    reader.readAsDataURL(file);
-  });
-
-  // Upload image to Firebase Storage and get URL
-  function uploadImage(file) {
-    return new Promise((resolve, reject) => {
-      const storageRef = storage.ref();
-      const imageRef = storageRef.child('posts/' + Date.now() + '_' + file.name);
-      const uploadTask = imageRef.put(file);
-
-      uploadTask.on('state_changed', 
-        snapshot => {
-          // Optional: could track upload progress here
-        }, 
-        error => reject(error), 
-        () => {
-          uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
-            resolve(downloadURL);
-          });
-        }
-      );
-    });
+  function getCurrentTime() {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  async function createPost() {
-    const postText = document.getElementById('postText').value.trim();
-    if (!postText) {
-      alert("Please write something before posting.");
-      return;
-    }
-    const userName = document.getElementById('userName').value.trim() || "Anonymous";
-
-    const postImageFile = document.getElementById('postImageInput').files[0];
-    let postImageURL = "";
-
-    if (postImageFile) {
-      try {
-        postImageURL = await uploadImage(postImageFile);
-      } catch (err) {
-        alert("Image upload failed: " + err.message);
-        return;
-      }
-    }
-
-    // Use existing profilePicURL (you can add upload for profile pic later)
-    const thisId = ++postId;
-
-    const newPost = {
-      id: thisId,
-      name: userName,
-      text: postText,
-      profilePic: profilePicURL,
-      postImage: postImageURL,
-      timestamp: Date.now()
-    };
-
-    await database.ref("posts/" + thisId).set(newPost);
-    renderPostFromData(newPost);
-
-    // Clear inputs
-    document.getElementById('postText').value = "";
-    document.getElementById('postImageInput').value = "";
+  function appendMessage(text, type, time) {
+    const div = document.createElement("div");
+    div.className = `message ${type}`;
+    div.innerHTML = `<div>${text}</div><div class="time">${time}</div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
   }
 
-  function renderPostFromData(post) {
-    let html = `
-      <div class="fake-post" id="post-${post.id}">
-        <div class="post-header">
-          <img src="${post.profilePic}" alt="Profile" />
-          <div class="name-time">
-            <strong>${post.name}</strong><br />
-            <span>Just now</span>
-          </div>
-        </div>
-        <div style="margin-top:10px;">${post.text}</div>
-        ${post.postImage ? `<img class="uploaded-img" src="${post.postImage}" alt="Uploaded" />` : ''}
-        <div class="reaction-bar">
-          <span id="like-${post.id}" onclick="likePost(${post.id})">👍 0</span>
-          <span id="comment-count-${post.id}">💬 0</span>
-          <span id="share-${post.id}">↪️ 0</span>
-        </div>
-        <button class="comment-toggle" onclick="toggleComments(${post.id})">Show Comments</button>
-        <div style="display:none" id="comment-section-${post.id}">
-          <input type="text" placeholder="Write a comment..." id="comment-input-${post.id}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 6px;" />
-          <button onclick="postComment(${post.id})" style="margin-top: 5px; width: 100%; padding: 6px; border-radius: 6px; border: none; background: #0a66c2; color: white;">Post Comment</button>
-          <div id="comments-${post.id}" style="margin-top: 10px;"></div>
-        </div>
-      </div>
-    `;
-    document.getElementById('outputPost').innerHTML = html + document.getElementById('outputPost').innerHTML;
-    autoIncreaseShare(post.id);
-    autoLikePost(post.id);
-    autoComment(post.id);
-  }
-
-  function toggleComments(id) {
-    const section = document.getElementById(`comment-section-${id}`);
-    section.style.display = section.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function likePost(id) {
-    const likeBtn = document.getElementById(`like-${id}`);
-    if (!likeBtn.classList.contains("liked")) {
-      let count = parseInt(likeBtn.innerText.split(" ")[1]);
-      likeBtn.innerText = `👍 ${count + 1}`;
-      likeBtn.classList.add("liked");
-      likeBtn.style.color = "#1877f2";
-    }
-  }
-
-  function postComment(id) {
-    const input = document.getElementById(`comment-input-${id}`);
+  function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
-    const commentBox = document.getElementById(`comments-${id}`);
-    commentBox.innerHTML += `<div style="margin:5px 0;">💬 ${text}</div>`;
-    input.value = "";
-    const countSpan = document.getElementById(`comment-count-${id}`);
-    let count = parseInt(countSpan.innerText.split(" ")[1]);
-    countSpan.innerText = `💬 ${count + 1}`;
-  }
 
-  function autoIncreaseShare(id) {
-    let shareCount = 0;
-    const shareSpan = document.getElementById(`share-${id}`);
-    setInterval(() => {
-      shareCount++;
-      shareSpan.innerText = `↪️ ${shareCount}`;
-    }, 15000);
-  }
-
-  function autoLikePost(id) {
-    let likeCount = 0;
-    const likeSpan = document.getElementById(`like-${id}`);
-    setInterval(() => {
-      likeCount++;
-      likeSpan.innerText = `👍 ${likeCount}`;
-    }, 10000);
-  }
-
-  function autoComment(id) {
-    const commentBox = document.getElementById(`comments-${id}`);
-    const countSpan = document.getElementById(`comment-count-${id}`);
-    const autoComments = ["Nice!", "Awesome!", "Cool!", "Great post!", "Love it!"];
-    let i = 0;
-    setInterval(() => {
-      const text = autoComments[i % autoComments.length];
-      commentBox.innerHTML += `<div style="margin:5px 0;">💬 ${text}</div>`;
-      let count = parseInt(countSpan.innerText.split(" ")[1]);
-      countSpan.innerText = `💬 ${count + 1}`;
-      i++;
-    }, 20000);
-  }
-
-  window.onload = function () {
-    database.ref("posts").once("value", function(snapshot) {
-      const data = snapshot.val();
-      for (let key in data) {
-        const post = data[key];
-        postId = Math.max(postId, post.id);
-        renderPostFromData(post);
-      }
+    const time = getCurrentTime();
+    db.ref("messages").push({
+      text,
+      type: "sent",
+      time
     });
-  };
-</script>
 
+    input.value = "";
+  }
+
+  // Listen for messages
+  db.ref("messages").on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    appendMessage(msg.text, msg.type, msg.time);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
 </body>
 </html>
