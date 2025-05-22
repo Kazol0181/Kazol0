@@ -101,29 +101,48 @@
       right: 10px;
       cursor: pointer;
     }
+    .login-screen {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-screen button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      background: #db4437;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-<div class="chat-container">
-  <div class="chat-header">
-    <img src="https://i.ibb.co/6HYz3mF/profile.jpg" />
-    <span>আয়াজ হাসান</span>
+<div id="app">
+  <div class="login-screen" id="login-screen">
+    <button onclick="signIn()">Google দিয়ে লগইন করুন</button>
   </div>
 
-  <div class="chat-messages" id="messages"></div>
-
-  <div class="chat-input">
-    <input type="text" id="message-input" placeholder="মেসেজ লিখুন..." />
-    <button onclick="sendMessage()">Send</button>
+  <div class="chat-container" style="display:none" id="chat-container">
+    <div class="chat-header">
+      <img id="user-pic" src="" />
+      <span id="user-name">...</span>
+    </div>
+    <div class="chat-messages" id="messages"></div>
+    <div class="chat-input">
+      <input type="text" id="message-input" placeholder="মেসেজ লিখুন..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
   </div>
 </div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyDkfW0Yf-9oR64j5GAPuBW_1G-rqGK9cOY",
     authDomain: "kazol-35172.firebaseapp.com",
@@ -137,21 +156,24 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const auth = firebase.auth();
 
-  // ইউজার আইড আলাদা করার জন্য (লোকালি রাখা হবে)
-  const userId = localStorage.getItem("userId") || generateUserId();
-  function generateUserId() {
-    const id = "user_" + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem("userId", id);
-    return id;
-  }
+  let currentUser;
 
-  const messages = document.getElementById("messages");
-  const input = document.getElementById("message-input");
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("chat-container").style.display = "flex";
+      document.getElementById("user-pic").src = user.photoURL;
+      document.getElementById("user-name").textContent = user.displayName;
+      listenForMessages();
+    }
+  });
 
-  // নোটিফিকেশন পারমিশন
-  if ("Notification" in window && Notification.permission !== "granted") {
-    Notification.requestPermission();
+  function signIn() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(alert);
   }
 
   function getCurrentTime() {
@@ -167,8 +189,8 @@
       <div class="time">${time}</div>
       ${showDelete ? `<button class="delete-btn" onclick="deleteMessage('${key}')">x</button>` : ""}
     `;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
+    document.getElementById("messages").appendChild(div);
+    document.getElementById("messages").scrollTop = messages.scrollHeight;
 
     if (type === "received" && document.visibilityState !== "visible") {
       showNotification("আয়াজ হাসান", text);
@@ -176,13 +198,15 @@
   }
 
   function sendMessage() {
+    const input = document.getElementById("message-input");
     const text = input.value.trim();
     if (!text) return;
     const time = getCurrentTime();
     db.ref("messages").push({
       text,
       time,
-      user: userId
+      uid: currentUser.uid,
+      name: currentUser.displayName
     });
     input.value = "";
   }
@@ -191,23 +215,21 @@
     db.ref("messages/" + key).remove();
   }
 
-  db.ref("messages").on("child_added", (snapshot) => {
-    const msg = snapshot.val();
-    const type = msg.user === userId ? "sent" : "received";
-    appendMessage(snapshot.key, msg.text, type, msg.time, msg.user === userId);
-  });
-
-  db.ref("messages").on("child_removed", (snapshot) => {
-    document.querySelectorAll(".message").forEach(div => {
-      if (div.innerHTML.includes(`deleteMessage('${snapshot.key}')`)) {
-        div.remove();
-      }
+  function listenForMessages() {
+    db.ref("messages").on("child_added", (snapshot) => {
+      const msg = snapshot.val();
+      const type = msg.uid === currentUser.uid ? "sent" : "received";
+      appendMessage(snapshot.key, msg.text, type, msg.time, msg.uid === currentUser.uid);
     });
-  });
 
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendMessage();
-  });
+    db.ref("messages").on("child_removed", (snapshot) => {
+      document.querySelectorAll(".message").forEach(div => {
+        if (div.innerHTML.includes(`deleteMessage('${snapshot.key}')`)) {
+          div.remove();
+        }
+      });
+    });
+  }
 
   function showNotification(title, body) {
     if (Notification.permission === "granted") {
@@ -215,8 +237,14 @@
         body,
         icon: "https://i.ibb.co/6HYz3mF/profile.jpg"
       });
+    } else {
+      Notification.requestPermission();
     }
   }
+
+  document.getElementById("message-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
 </script>
 </body>
 </html>
