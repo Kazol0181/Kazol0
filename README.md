@@ -1,173 +1,433 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Many.com</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kazolkobi</title>
   <style>
-    /* আগের সব CSS ঠিক রাখা হয়েছে */
-    body { font-family: Arial; background: #f0f2f5; margin: 0; }
-    header { background: #1877f2; color: white; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; }
-    .container { padding: 15px; max-width: 600px; margin: auto; background: #fff; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .user-info { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-    .left-info { display: flex; align-items: center; gap: 10px; }
-    .profile-pic { width: 40px; height: 40px; background: gray; border-radius: 50%; }
-    .follow-btn { padding: 5px 10px; border: 1px solid #1877f2; background: white; color: #1877f2; border-radius: 5px; cursor: pointer; }
-    .content { margin-top: 10px; }
-    .actions { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
-    .actions button { padding: 5px 10px; border: none; border-radius: 5px; background: #e4e6eb; cursor: pointer; }
-    #commentForm { margin-top: 10px; display: none; }
-    #commentForm input { margin: 5px 0; padding: 5px; width: 100%; }
-    .comment { background: #f0f2f5; padding: 5px; border-radius: 5px; margin-top: 5px; }
-    .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; }
-    .popup-content { background: #fff; padding: 20px; border-radius: 10px; text-align: center; }
-    .admin-panel { margin-top: 20px; padding: 15px; background: #e9ebee; border-radius: 10px; }
-    .admin-panel input { margin: 5px 0; width: 100%; padding: 5px; }
-    @media (max-width: 600px) { .actions { flex-direction: column; } }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #e9ebee;
+    }
+
+    .search-bar {
+      background: white;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+
+    .search-bar input {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+    }
+
+    .navbar {
+      background-color: #1877f2;
+      color: white;
+      padding: 14px;
+      font-size: 26px;
+      font-weight: bold;
+      text-align: center;
+      font-family: 'Segoe UI', sans-serif;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    input, textarea, button {
+      font-family: inherit;
+    }
+
+    input[type="text"],
+    input[type="file"],
+    textarea {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #1877f2;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 10px;
+      background: gray;
+      cursor: pointer;
+    }
+
+    .name {
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: gray;
+    }
+
+    .post-content img {
+      max-width: 100%;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+
+    .counts {
+      font-size: 14px;
+      color: gray;
+      margin-top: 8px;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 10px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+
+    .action-buttons button {
+      background: none;
+      border: none;
+      color: #606770;
+      font-weight: bold;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .action-buttons button:hover {
+      background: #f0f2f5;
+      border-radius: 5px;
+    }
+
+    .comments {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .comment-box {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .comment-box img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .comment-box input {
+      flex: 1;
+    }
+
+    .comments ul {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 10px;
+    }
+
+    .comments li {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .comments li img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+
+    .comment-content {
+      background: #f0f2f5;
+      padding: 8px 12px;
+      border-radius: 15px;
+    }
+
+    .comment-content strong {
+      display: block;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .follow-btn {
+      background: #e4e6eb;
+      color: #1877f2;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 15px;
+      margin-left: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 480px) {
+      .navbar {
+        font-size: 20px;
+      }
+    }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-  <header>Many.com</header>
+
+  <div class="search-bar">
+    <input type="text" placeholder="🔍 সার্চ করুন...">
+  </div>
+  <div class="navbar">Kazolkobi</div>
+
   <div class="container">
-    <div class="user-info">
-      <div class="left-info">
-        <div class="profile-pic"></div>
-        <strong id="username">Rubaed</strong>
-        <span style="color:gray;">8m</span>
-      </div>
-      <button class="follow-btn">Follow</button>
+
+    <div class="card">
+      <h3>প্রোফাইল সেট করুন</h3>
+      <input type="text" id="profileName" placeholder="আপনার নাম লিখুন" />
+      <input type="file" id="profilePic" accept="image/*" />
+      <button onclick="saveProfile()">সেভ প্রোফাইল</button>
     </div>
-    <div class="content">
-      <p id="postText">Indeed, we have lost the starface</p>
-      <div style="width:100%;text-align:center;padding:30px;background:#f0f0f0;border-radius:8px;">No image</div>
+
+    <div class="card">
+      <textarea id="postText" rows="3" placeholder="আপনার কী মনে হচ্ছে?"></textarea>
+      <input type="file" id="postImage" accept="image/*" />
+      <button onclick="createPost()">পোস্ট করুন</button>
     </div>
-    <div class="actions">
-      <button onclick="likePost()">Like (<span id="likeCount">0</span>)</button>
-      <button onclick="toggleCommentList()">Comment (<span id="commentCount">0</span>)</button>
-      <button onclick="showLogin()">Message</button>
-    </div>
-    <div id="commentForm">
-      <input type="text" id="commenterName" placeholder="Your name">
-      <input type="text" id="commentText" placeholder="Your comment">
-      <button onclick="postComment()">Post Comment</button>
-    </div>
-    <div id="comments" style="display:none;"></div>
-    <div class="admin-panel">
-      <h3>Admin Panel</h3>
-      <input type="password" id="adminPass" placeholder="Password">
-      <button onclick="unlockAdmin()">Login</button>
-      <div id="adminTools" style="display:none;">
-        <input type="text" id="editProfileName" placeholder="Edit Profile Name">
-        <input type="text" id="editPostText" placeholder="Edit Post Text">
-        <input type="number" id="editLikeCount" placeholder="Edit Like Count">
-        <input type="text" id="adminCommentName" placeholder="Comment Name">
-        <input type="text" id="adminCommentText" placeholder="Comment Text">
-        <button onclick="applyAdminChanges()">Apply Changes</button>
-        <button onclick="adminPostComment()">Post Admin Comment</button>
-      </div>
-    </div>
-  </div>
-  <div class="popup" id="popup">
-    <div class="popup-content">
-      <p>Please login to message</p>
-      <button onclick="closePopup()">Close</button>
-    </div>
+
+    <div id="postFeed"></div>
   </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDkfW0Yf-9oR64j5GAPuBW_1G-rqGK9cOY",
-      authDomain: "kazol-35172.firebaseapp.com",
-      databaseURL: "https://kazol-35172-default-rtdb.firebaseio.com",
-      projectId: "kazol-35172",
-      storageBucket: "kazol-35172.firebasestorage.app",
-      messagingSenderId: "862146314863",
-      appId: "1:862146314863:web:d72e86690454dac3d6439a",
-      measurementId: "G-JJEMZMMZY0"
+<script>
+  // Firebase config ও initialization
+  const firebaseConfig = {
+    apiKey: "AIzaSyDkfW0Yf-9oR64j5GAPuBW_1G-rqGK9cOY",
+    authDomain: "kazol-35172.firebaseapp.com",
+    databaseURL: "https://kazol-35172-default-rtdb.firebaseio.com",
+    projectId: "kazol-35172",
+    storageBucket: "kazol-35172.firebasestorage.app",
+    messagingSenderId: "862146314863",
+    appId: "1:862146314863:web:15d961531d90c23cd6439a",
+    measurementId: "G-ECVXRGP67B"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let profile = {
+    name: "নাম নেই",
+    avatar: "",
+    followers: [],
+  };
+
+  function saveProfile() {
+    const name = document.getElementById("profileName").value.trim();
+    const file = document.getElementById("profilePic").files[0];
+    if (name) profile.name = name;
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        profile.avatar = e.target.result;
+        saveProfileToFirebase();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      profile.avatar = '';
+      saveProfileToFirebase();
+    }
+  }
+
+  function saveProfileToFirebase() {
+    db.ref('users/' + profile.name).set(profile)
+      .then(() => alert("প্রোফাইল সেভ হয়েছে Firebase এ!"))
+      .catch(err => alert("Error saving profile: " + err.message));
+  }
+
+  function minutesAgo(date) {
+    const diff = Math.floor((new Date() - new Date(date)) / 60000);
+    return `${diff} মিনিট আগে`;
+  }
+
+  function createPost() {
+    const text = document.getElementById("postText").value.trim();
+    const file = document.getElementById("postImage").files[0];
+    if (!text && !file) return alert("পোস্ট করার জন্য কিছু লিখুন বা ছবি দিন।");
+
+    const reader = new FileReader();
+    const createdAt = new Date().toISOString();
+    reader.onload = function (e) {
+      const imageSrc = file ? e.target.result : null;
+      addPost(text, imageSrc, createdAt);
+      savePostToFirebase(text, imageSrc, createdAt);
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    let likeCount = 0;
-    let commentCount = 0;
-    let commentsVisible = false;
-
-    function likePost() {
-      likeCount++;
-      document.getElementById("likeCount").innerText = likeCount;
-      db.collection("posts").doc("mainPost").set({ likes: likeCount }, { merge: true });
+    if (file) reader.readAsDataURL(file);
+    else {
+      addPost(text, null, createdAt);
+      savePostToFirebase(text, null, createdAt);
     }
 
-    function toggleCommentList() {
-      document.getElementById("commentForm").style.display = "block";
-      commentsVisible = !commentsVisible;
-      document.getElementById("comments").style.display = commentsVisible ? "block" : "none";
+    document.getElementById("postText").value = '';
+    document.getElementById("postImage").value = '';
+  }
+
+  function savePostToFirebase(text, imageSrc, createdAt) {
+    const postData = {
+      user: profile.name,
+      avatar: profile.avatar,
+      text: text,
+      image: imageSrc,
+      createdAt: createdAt,
+      likes: 0,
+      comments: []
+    };
+    db.ref('posts').push(postData)
+      .catch(err => alert("Error saving post: " + err.message));
+  }
+
+  function addPost(text, imageSrc, createdAt) {
+    const post = document.createElement("div");
+    post.className = "card";
+    const avatarHTML = profile.avatar ? `<img class="avatar" src="${profile.avatar}" onclick="viewProfile()">` : `<div class="avatar"></div>`;
+    post.innerHTML = `
+      <div class="post-header">
+        <div class="user-info">
+          ${avatarHTML}
+          <div>
+            <div class="name" onclick="viewProfile()">${profile.name} <button class="follow-btn" onclick="followUser(event)">ফলো</button></div>
+            <div class="timestamp">${minutesAgo(createdAt)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="post-content">
+        <div style="margin-top:10px;">${text}</div>
+        ${imageSrc ? `<img src="${imageSrc}">` : ""}
+      </div>
+      <div class="counts">
+        👍 <span class="likeCount">0</span> | 💬 <span class="commentCount">0</span>
+      </div>
+      <div class="action-buttons">
+        <button onclick="likePost(this)">👍 লাইক</button>
+        <button onclick="toggleComments(this)">💬 কমেন্ট</button>
+        <button onclick="alert('শেয়ার করা হয়েছে!')">↗️ শেয়ার</button>
+        <button onclick="deletePost(this)">🗑️ ডিলিট</button>
+      </div>
+      <div class="comments">
+        <div class="comment-box">
+          <img src="${profile.avatar || 'https://via.placeholder.com/30'}">
+          <input type="text" placeholder="মন্তব্য লিখুন...">
+          <button onclick="addComment(this)">পোস্ট</button>
+        </div>
+        <ul></ul>
+      </div>
+    `;
+    post.setAttribute("data-user", profile.name);
+    document.getElementById("postFeed").prepend(post);
+  }
+
+  function likePost(btn) {
+    const post = btn.closest(".card");
+    const span = post.querySelector(".likeCount");
+    span.innerText = parseInt(span.innerText) + 1;
+  }
+
+  function toggleComments(btn) {
+    const post = btn.closest(".card");
+    const comments = post.querySelector(".comments");
+    comments.style.display = comments.style.display === "none" ? "block" : "none";
+  }
+
+  function addComment(btn) {
+    const commentBox = btn.closest(".comment-box");
+    const input = commentBox.querySelector("input");
+    const text = input.value.trim();
+    if (!text) return;
+
+    const ul = btn.closest(".comments").querySelector("ul");
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <img src="${profile.avatar || 'https://via.placeholder.com/30'}" onclick="viewProfile()">
+      <div class="comment-content">
+        <strong onclick="viewProfile()">${profile.name}</strong>
+        ${text}
+      </div>
+    `;
+    ul.appendChild(li);
+    input.value = '';
+
+    const count = btn.closest(".card").querySelector(".commentCount");
+    count.innerText = parseInt(count.innerText) + 1;
+  }
+
+  function deletePost(btn) {
+    const post = btn.closest(".card");
+    if (post.getAttribute("data-user") === profile.name) {
+      post.remove();
+    } else {
+      alert("শুধু নিজের পোস্ট ডিলিট করা যাবে।");
     }
+  }
 
-    function postComment() {
-      const name = document.getElementById("commenterName").value.trim();
-      const text = document.getElementById("commentText").value.trim();
-      if (!name || !text) return alert("Name and comment required!");
-      db.collection("comments").add({ name, text, timestamp: Date.now() });
-      document.getElementById("commentText").value = "";
-    }
+  function viewProfile() {
+    alert("প্রোফাইল ভিউ ফিচার আসছে...");
+  }
 
-    function showLogin() {
-      document.getElementById("popup").style.display = "flex";
-    }
-
-    function closePopup() {
-      document.getElementById("popup").style.display = "none";
-    }
-
-    function unlockAdmin() {
-      const pass = document.getElementById("adminPass").value;
-      if (pass === "0181") {
-        document.getElementById("adminTools").style.display = "block";
-      } else {
-        alert("Incorrect password");
-      }
-    }
-
-    function applyAdminChanges() {
-      const newName = document.getElementById("editProfileName").value;
-      const newText = document.getElementById("editPostText").value;
-      const newLikes = document.getElementById("editLikeCount").value;
-      if (newName) document.getElementById("username").innerText = newName;
-      if (newText) document.getElementById("postText").innerText = newText;
-      if (newLikes !== "") {
-        likeCount = parseInt(newLikes);
-        document.getElementById("likeCount").innerText = likeCount;
-      }
-    }
-
-    function adminPostComment() {
-      const name = document.getElementById("adminCommentName").value;
-      const text = document.getElementById("adminCommentText").value;
-      if (!name || !text) return;
-      db.collection("comments").add({ name, text, timestamp: Date.now() });
-    }
-
-    db.collection("comments").orderBy("timestamp", "asc").onSnapshot(snapshot => {
-      const commentsDiv = document.getElementById("comments");
-      commentsDiv.innerHTML = "";
-      commentCount = 0;
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        commentsDiv.innerHTML += `<div class='comment'><b>${data.name}</b>: ${data.text}</div>`;
-        commentCount++;
-      });
-      document.getElementById("commentCount").innerText = commentCount;
-    });
-
-    db.collection("posts").doc("mainPost").get().then(doc => {
-      if (doc.exists) {
-        likeCount = doc.data().likes || 0;
-        document.getElementById("likeCount").innerText = likeCount;
-      }
-    });
-  </script>
+  function followUser(e) {
+    e.stopPropagation();
+    alert("ফলো করা হয়েছে!");
+  }
+</script>
 </body>
 </html>
