@@ -1,13 +1,80 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kazolkobi</title>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Many.com</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <style>
+    /* আগের সব CSS ঠিক রাখা হয়েছে */
+    body { font-family: Arial; background: #f0f2f5; margin: 0; }
+    header { background: #1877f2; color: white; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; }
+    .container { padding: 15px; max-width: 600px; margin: auto; background: #fff; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .user-info { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .left-info { display: flex; align-items: center; gap: 10px; }
+    .profile-pic { width: 40px; height: 40px; background: gray; border-radius: 50%; }
+    .follow-btn { padding: 5px 10px; border: 1px solid #1877f2; background: white; color: #1877f2; border-radius: 5px; cursor: pointer; }
+    .content { margin-top: 10px; }
+    .actions { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .actions button { padding: 5px 10px; border: none; border-radius: 5px; background: #e4e6eb; cursor: pointer; }
+    #commentForm { margin-top: 10px; display: none; }
+    #commentForm input { margin: 5px 0; padding: 5px; width: 100%; }
+    .comment { background: #f0f2f5; padding: 5px; border-radius: 5px; margin-top: 5px; }
+    .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; }
+    .popup-content { background: #fff; padding: 20px; border-radius: 10px; text-align: center; }
+    .admin-panel { margin-top: 20px; padding: 15px; background: #e9ebee; border-radius: 10px; }
+    .admin-panel input { margin: 5px 0; width: 100%; padding: 5px; }
+    @media (max-width: 600px) { .actions { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <header>Many.com</header>
+  <div class="container">
+    <div class="user-info">
+      <div class="left-info">
+        <div class="profile-pic"></div>
+        <strong id="username">Rubaed</strong>
+        <span style="color:gray;">8m</span>
+      </div>
+      <button class="follow-btn">Follow</button>
+    </div>
+    <div class="content">
+      <p id="postText">Indeed, we have lost the starface</p>
+      <div style="width:100%;text-align:center;padding:30px;background:#f0f0f0;border-radius:8px;">No image</div>
+    </div>
+    <div class="actions">
+      <button onclick="likePost()">Like (<span id="likeCount">0</span>)</button>
+      <button onclick="toggleCommentList()">Comment (<span id="commentCount">0</span>)</button>
+      <button onclick="showLogin()">Message</button>
+    </div>
+    <div id="commentForm">
+      <input type="text" id="commenterName" placeholder="Your name">
+      <input type="text" id="commentText" placeholder="Your comment">
+      <button onclick="postComment()">Post Comment</button>
+    </div>
+    <div id="comments" style="display:none;"></div>
+    <div class="admin-panel">
+      <h3>Admin Panel</h3>
+      <input type="password" id="adminPass" placeholder="Password">
+      <button onclick="unlockAdmin()">Login</button>
+      <div id="adminTools" style="display:none;">
+        <input type="text" id="editProfileName" placeholder="Edit Profile Name">
+        <input type="text" id="editPostText" placeholder="Edit Post Text">
+        <input type="number" id="editLikeCount" placeholder="Edit Like Count">
+        <input type="text" id="adminCommentName" placeholder="Comment Name">
+        <input type="text" id="adminCommentText" placeholder="Comment Text">
+        <button onclick="applyAdminChanges()">Apply Changes</button>
+        <button onclick="adminPostComment()">Post Admin Comment</button>
+      </div>
+    </div>
+  </div>
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <p>Please login to message</p>
+      <button onclick="closePopup()">Close</button>
+    </div>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -21,219 +88,86 @@
       measurementId: "G-JJEMZMMZY0"
     };
     firebase.initializeApp(firebaseConfig);
-  </script>
+    const db = firebase.firestore();
 
-  <style>
-    /* [এখানে পূর্বের CSS কোড অপরিবর্তিত থাকছে, স্কিপ করা হলো ছোট করার জন্য] */
-  </style>
-</head>
-<body>
+    let likeCount = 0;
+    let commentCount = 0;
+    let commentsVisible = false;
 
-  <div class="search-bar">
-    <input type="text" placeholder="🔍 সার্চ করুন...">
-  </div>
-  <div class="navbar">Kazolkobi</div>
+    function likePost() {
+      likeCount++;
+      document.getElementById("likeCount").innerText = likeCount;
+      db.collection("posts").doc("mainPost").set({ likes: likeCount }, { merge: true });
+    }
 
-  <div class="container">
-    <div class="card">
-      <h3>প্রোফাইল সেট করুন</h3>
-      <input type="text" id="profileName" placeholder="আপনার নাম লিখুন">
-      <input type="file" id="profilePic" accept="image/*">
-      <button onclick="saveProfile()">সেভ প্রোফাইল</button>
-    </div>
+    function toggleCommentList() {
+      document.getElementById("commentForm").style.display = "block";
+      commentsVisible = !commentsVisible;
+      document.getElementById("comments").style.display = commentsVisible ? "block" : "none";
+    }
 
-    <div class="card">
-      <textarea id="postText" rows="3" placeholder="আপনার কী মনে হচ্ছে?"></textarea>
-      <input type="file" id="postImage" accept="image/*">
-      <button onclick="createPost()">পোস্ট করুন</button>
-    </div>
+    function postComment() {
+      const name = document.getElementById("commenterName").value.trim();
+      const text = document.getElementById("commentText").value.trim();
+      if (!name || !text) return alert("Name and comment required!");
+      db.collection("comments").add({ name, text, timestamp: Date.now() });
+      document.getElementById("commentText").value = "";
+    }
 
-    <div id="postFeed"></div>
-  </div>
+    function showLogin() {
+      document.getElementById("popup").style.display = "flex";
+    }
 
-  <script>
-    let profile = {
-      name: "নাম নেই",
-      avatar: "",
-      followers: [],
-      likes: {}
-    };
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
+    }
 
-    function saveProfile() {
-      const name = document.getElementById("profileName").value.trim();
-      const file = document.getElementById("profilePic").files[0];
-      if (name) profile.name = name;
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          profile.avatar = e.target.result;
-          document.querySelector(".navbar").innerText = `Kazolkobi (${profile.followers.length} ফলোয়ার)`;
-        };
-        reader.readAsDataURL(file);
+    function unlockAdmin() {
+      const pass = document.getElementById("adminPass").value;
+      if (pass === "0181") {
+        document.getElementById("adminTools").style.display = "block";
       } else {
-        profile.avatar = '';
-      }
-      alert("প্রোফাইল সেভ হয়েছে!");
-    }
-
-    function minutesAgo(date) {
-      const diff = Math.floor((new Date() - date) / 60000);
-      return `${diff} মিনিট আগে`;
-    }
-
-    function createPost() {
-      const text = document.getElementById("postText").value.trim();
-      const file = document.getElementById("postImage").files[0];
-      if (!text && !file) return alert("পোস্ট করার জন্য কিছু লিখুন বা ছবি দিন।");
-
-      const createdAt = new Date();
-
-      const saveToDatabase = (imageUrl) => {
-        const postData = {
-          name: profile.name,
-          avatar: profile.avatar,
-          text,
-          image: imageUrl || null,
-          createdAt: createdAt.toISOString(),
-        };
-        const newPostKey = firebase.database().ref().child('posts').push().key;
-        firebase.database().ref('posts/' + newPostKey).set(postData);
-        addPost(text, imageUrl, createdAt);
-      };
-
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = e => saveToDatabase(e.target.result);
-        reader.readAsDataURL(file);
-      } else {
-        saveToDatabase(null);
-      }
-
-      document.getElementById("postText").value = '';
-      document.getElementById("postImage").value = '';
-    }
-
-    function addPost(text, imageSrc, createdAt) {
-      const post = document.createElement("div");
-      post.className = "card";
-      const timestamp = createdAt.getTime();
-      post.setAttribute("data-timestamp", timestamp);
-      post.setAttribute("data-user", profile.name);
-      const avatarHTML = profile.avatar ? `<img class="avatar" src="${profile.avatar}" onclick="viewProfile()">` : `<div class="avatar"></div>`;
-      post.innerHTML = `
-        <div class="post-header">
-          <div class="user-info">
-            ${avatarHTML}
-            <div>
-              <div class="name" onclick="viewProfile()">${profile.name} <button class="follow-btn" onclick="followUser(event)">ফলো</button></div>
-              <div class="timestamp">${minutesAgo(createdAt)}</div>
-            </div>
-          </div>
-        </div>
-        <div class="post-content">
-          <div style="margin-top:10px;">${text}</div>
-          ${imageSrc ? `<img src="${imageSrc}">` : ""}
-        </div>
-        <div class="counts">
-          👍 <span class="likeCount">0</span> | 💬 <span class="commentCount">0</span>
-        </div>
-        <div class="action-buttons">
-          <button onclick="likePost(this)">👍 লাইক</button>
-          <button onclick="toggleComments(this)">💬 কমেন্ট</button>
-          <button onclick="alert('শেয়ার করা হয়েছে!')">↗️ শেয়ার</button>
-          <button onclick="deletePost(this)">🗑️ ডিলিট</button>
-        </div>
-        <div class="comments">
-          <div class="comment-box">
-            <img src="${profile.avatar || 'https://via.placeholder.com/30'}">
-            <input type="text" placeholder="মন্তব্য লিখুন...">
-            <button onclick="addComment(this)">পোস্ট</button>
-          </div>
-          <ul></ul>
-        </div>
-      `;
-      document.getElementById("postFeed").prepend(post);
-    }
-
-    function likePost(btn) {
-      const post = btn.closest(".card");
-      const postId = post.dataset.timestamp;
-      const likeSpan = post.querySelector(".likeCount");
-
-      if (!profile.likes[postId]) {
-        profile.likes[postId] = true;
-        likeSpan.innerText = parseInt(likeSpan.innerText) + 1;
-        btn.innerText = "👎 আনলাইক";
-      } else {
-        delete profile.likes[postId];
-        likeSpan.innerText = parseInt(likeSpan.innerText) - 1;
-        btn.innerText = "👍 লাইক";
+        alert("Incorrect password");
       }
     }
 
-    function toggleComments(btn) {
-      const post = btn.closest(".card");
-      const comments = post.querySelector(".comments");
-      comments.style.display = comments.style.display === "none" ? "block" : "none";
-    }
-
-    function addComment(btn) {
-      const commentBox = btn.closest(".comment-box");
-      const input = commentBox.querySelector("input");
-      const text = input.value.trim();
-      if (!text) return;
-
-      const ul = btn.closest(".comments").querySelector("ul");
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <img src="${profile.avatar || 'https://via.placeholder.com/30'}" onclick="viewProfile()">
-        <div class="comment-content">
-          <strong onclick="viewProfile()">${profile.name}</strong>
-          ${text}
-          <button onclick="deleteComment(this)" style="margin-left:10px;color:red;border:none;background:none;">x</button>
-        </div>
-      `;
-      ul.appendChild(li);
-      input.value = '';
-
-      const count = btn.closest(".card").querySelector(".commentCount");
-      count.innerText = parseInt(count.innerText) + 1;
-    }
-
-    function deleteComment(btn) {
-      const commentItem = btn.closest("li");
-      commentItem.remove();
-      const post = btn.closest(".card");
-      const count = post.querySelector(".commentCount");
-      count.innerText = parseInt(count.innerText) - 1;
-    }
-
-    function deletePost(btn) {
-      const post = btn.closest(".card");
-      if (post.getAttribute("data-user") === profile.name) {
-        post.remove();
-      } else {
-        alert("শুধু নিজের পোস্ট ডিলিট করা যাবে।");
+    function applyAdminChanges() {
+      const newName = document.getElementById("editProfileName").value;
+      const newText = document.getElementById("editPostText").value;
+      const newLikes = document.getElementById("editLikeCount").value;
+      if (newName) document.getElementById("username").innerText = newName;
+      if (newText) document.getElementById("postText").innerText = newText;
+      if (newLikes !== "") {
+        likeCount = parseInt(newLikes);
+        document.getElementById("likeCount").innerText = likeCount;
       }
     }
 
-    function viewProfile() {
-      alert("প্রোফাইল ভিউ ফিচার আসছে...");
+    function adminPostComment() {
+      const name = document.getElementById("adminCommentName").value;
+      const text = document.getElementById("adminCommentText").value;
+      if (!name || !text) return;
+      db.collection("comments").add({ name, text, timestamp: Date.now() });
     }
 
-    function followUser(e) {
-      e.stopPropagation();
-      alert("ফলো করা হয়েছে!");
-    }
-
-    window.onload = function () {
-      const postFeedRef = firebase.database().ref('posts');
-      postFeedRef.on('child_added', snapshot => {
-        const data = snapshot.val();
-        addPost(data.text, data.image, new Date(data.createdAt));
+    db.collection("comments").orderBy("timestamp", "asc").onSnapshot(snapshot => {
+      const commentsDiv = document.getElementById("comments");
+      commentsDiv.innerHTML = "";
+      commentCount = 0;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        commentsDiv.innerHTML += `<div class='comment'><b>${data.name}</b>: ${data.text}</div>`;
+        commentCount++;
       });
-    };
-  </script>
+      document.getElementById("commentCount").innerText = commentCount;
+    });
 
+    db.collection("posts").doc("mainPost").get().then(doc => {
+      if (doc.exists) {
+        likeCount = doc.data().likes || 0;
+        document.getElementById("likeCount").innerText = likeCount;
+      }
+    });
+  </script>
 </body>
 </html>
