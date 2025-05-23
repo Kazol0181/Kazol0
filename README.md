@@ -222,15 +222,11 @@
       }
     }
   </style>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
   <div class="search-bar">
-    <input type="text" placeholder="🔍 সার্চ করুন...">
+    <input type="text" placeholder="🔍 সার্চ করুন..." />
   </div>
   <div class="navbar">Kazolkobi</div>
 
@@ -252,182 +248,272 @@
     <div id="postFeed"></div>
   </div>
 
-<script>
-  // Firebase config ও initialization
-  const firebaseConfig = {
-    apiKey: "AIzaSyDkfW0Yf-9oR64j5GAPuBW_1G-rqGK9cOY",
-    authDomain: "kazol-35172.firebaseapp.com",
-    databaseURL: "https://kazol-35172-default-rtdb.firebaseio.com",
-    projectId: "kazol-35172",
-    storageBucket: "kazol-35172.firebasestorage.app",
-    messagingSenderId: "862146314863",
-    appId: "1:862146314863:web:15d961531d90c23cd6439a",
-    measurementId: "G-ECVXRGP67B"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  let profile = {
-    name: "নাম নেই",
-    avatar: "",
-    followers: [],
-  };
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDkfW0Yf-9oR64j5GAPuBW_1G-rqGK9cOY",
+      authDomain: "kazol-35172.firebaseapp.com",
+      databaseURL: "https://kazol-35172-default-rtdb.firebaseio.com",
+      projectId: "kazol-35172",
+      storageBucket: "kazol-35172.firebasestorage.app",
+      messagingSenderId: "862146314863",
+      appId: "1:862146314863:web:15d961531d90c23cd6439a",
+      measurementId: "G-ECVXRGP67B"
+    };
 
-  function saveProfile() {
-    const name = document.getElementById("profileName").value.trim();
-    const file = document.getElementById("profilePic").files[0];
-    if (name) profile.name = name;
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        profile.avatar = e.target.result;
-        saveProfileToFirebase();
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let profile = {
+      name: "নাম নেই",
+      avatar: "",
+      followers: [],
+    };
+
+    function saveProfile() {
+      const name = document.getElementById("profileName").value.trim();
+      const file = document.getElementById("profilePic").files[0];
+      if (name) profile.name = name;
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          profile.avatar = e.target.result;
+          alert("প্রোফাইল সেভ হয়েছে!");
+        };
+        reader.readAsDataURL(file);
+      } else {
+        profile.avatar = '';
+        alert("প্রোফাইল সেভ হয়েছে!");
+      }
+    }
+
+    function minutesAgo(date) {
+      const now = new Date();
+      const diff = Math.floor((now - new Date(date)) / 60000);
+      if(diff < 1) return "এখনই";
+      if(diff < 60) return `${diff} মিনিট আগে`;
+      const hours = Math.floor(diff / 60);
+      if(hours < 24) return `${hours} ঘন্টা আগে`;
+      const days = Math.floor(hours / 24);
+      return `${days} দিন আগে`;
+    }
+
+    function createPost() {
+      const text = document.getElementById("postText").value.trim();
+      const file = document.getElementById("postImage").files[0];
+      if (!text && !file) return alert("পোস্ট করার জন্য কিছু লিখুন বা ছবি দিন।");
+
+      const createdAt = new Date().toISOString();
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const imageSrc = e.target.result;
+          savePostToFirebase(text, imageSrc, createdAt);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        savePostToFirebase(text, null, createdAt);
+      }
+
+      document.getElementById("postText").value = '';
+      document.getElementById("postImage").value = '';
+    }
+
+    function savePostToFirebase(text, imageSrc, createdAt) {
+      const postData = {
+        text: text,
+        image: imageSrc,
+        createdAt: createdAt,
+        user: profile.name,
+        avatar: profile.avatar,
+        likeCount: 0,
+        commentCount: 0
       };
-      reader.readAsDataURL(file);
-    } else {
-      profile.avatar = '';
-      saveProfileToFirebase();
-    }
-  }
-
-  function saveProfileToFirebase() {
-    db.ref('users/' + profile.name).set(profile)
-      .then(() => alert("প্রোফাইল সেভ হয়েছে Firebase এ!"))
-      .catch(err => alert("Error saving profile: " + err.message));
-  }
-
-  function minutesAgo(date) {
-    const diff = Math.floor((new Date() - new Date(date)) / 60000);
-    return `${diff} মিনিট আগে`;
-  }
-
-  function createPost() {
-    const text = document.getElementById("postText").value.trim();
-    const file = document.getElementById("postImage").files[0];
-    if (!text && !file) return alert("পোস্ট করার জন্য কিছু লিখুন বা ছবি দিন।");
-
-    const reader = new FileReader();
-    const createdAt = new Date().toISOString();
-    reader.onload = function (e) {
-      const imageSrc = file ? e.target.result : null;
-      addPost(text, imageSrc, createdAt);
-      savePostToFirebase(text, imageSrc, createdAt);
-    };
-    if (file) reader.readAsDataURL(file);
-    else {
-      addPost(text, null, createdAt);
-      savePostToFirebase(text, null, createdAt);
+      const newPostKey = db.ref().child('posts').push().key;
+      let updates = {};
+      updates['/posts/' + newPostKey] = postData;
+      db.ref().update(updates);
     }
 
-    document.getElementById("postText").value = '';
-    document.getElementById("postImage").value = '';
-  }
+    function addPost(text, imageSrc, createdAt, userName = profile.name, avatar = profile.avatar, likeCount = 0, commentCount = 0, postKey = null) {
+      const post = document.createElement("div");
+      post.className = "card";
+      post.setAttribute("data-user", userName);
+      if(postKey) post.setAttribute("data-postkey", postKey);
 
-  function savePostToFirebase(text, imageSrc, createdAt) {
-    const postData = {
-      user: profile.name,
-      avatar: profile.avatar,
-      text: text,
-      image: imageSrc,
-      createdAt: createdAt,
-      likes: 0,
-      comments: []
-    };
-    db.ref('posts').push(postData)
-      .catch(err => alert("Error saving post: " + err.message));
-  }
-
-  function addPost(text, imageSrc, createdAt) {
-    const post = document.createElement("div");
-    post.className = "card";
-    const avatarHTML = profile.avatar ? `<img class="avatar" src="${profile.avatar}" onclick="viewProfile()">` : `<div class="avatar"></div>`;
-    post.innerHTML = `
-      <div class="post-header">
-        <div class="user-info">
-          ${avatarHTML}
-          <div>
-            <div class="name" onclick="viewProfile()">${profile.name} <button class="follow-btn" onclick="followUser(event)">ফলো</button></div>
-            <div class="timestamp">${minutesAgo(createdAt)}</div>
+      const avatarHTML = avatar ? `<img class="avatar" src="${avatar}" onclick="viewProfile()">` : `<div class="avatar"></div>`;
+      post.innerHTML = `
+        <div class="post-header">
+          <div class="user-info">
+            ${avatarHTML}
+            <div>
+              <div class="name" onclick="viewProfile()">${userName} <button class="follow-btn" onclick="followUser(event)">ফলো</button></div>
+              <div class="timestamp">${minutesAgo(createdAt)}</div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="post-content">
-        <div style="margin-top:10px;">${text}</div>
-        ${imageSrc ? `<img src="${imageSrc}">` : ""}
-      </div>
-      <div class="counts">
-        👍 <span class="likeCount">0</span> | 💬 <span class="commentCount">0</span>
-      </div>
-      <div class="action-buttons">
-        <button onclick="likePost(this)">👍 লাইক</button>
-        <button onclick="toggleComments(this)">💬 কমেন্ট</button>
-        <button onclick="alert('শেয়ার করা হয়েছে!')">↗️ শেয়ার</button>
-        <button onclick="deletePost(this)">🗑️ ডিলিট</button>
-      </div>
-      <div class="comments">
-        <div class="comment-box">
-          <img src="${profile.avatar || 'https://via.placeholder.com/30'}">
-          <input type="text" placeholder="মন্তব্য লিখুন...">
-          <button onclick="addComment(this)">পোস্ট</button>
+        <div class="post-content">
+          <div style="margin-top:10px;">${text}</div>
+          ${imageSrc ? `<img src="${imageSrc}">` : ""}
         </div>
-        <ul></ul>
-      </div>
-    `;
-    post.setAttribute("data-user", profile.name);
-    document.getElementById("postFeed").prepend(post);
-  }
-
-  function likePost(btn) {
-    const post = btn.closest(".card");
-    const span = post.querySelector(".likeCount");
-    span.innerText = parseInt(span.innerText) + 1;
-  }
-
-  function toggleComments(btn) {
-    const post = btn.closest(".card");
-    const comments = post.querySelector(".comments");
-    comments.style.display = comments.style.display === "none" ? "block" : "none";
-  }
-
-  function addComment(btn) {
-    const commentBox = btn.closest(".comment-box");
-    const input = commentBox.querySelector("input");
-    const text = input.value.trim();
-    if (!text) return;
-
-    const ul = btn.closest(".comments").querySelector("ul");
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <img src="${profile.avatar || 'https://via.placeholder.com/30'}" onclick="viewProfile()">
-      <div class="comment-content">
-        <strong onclick="viewProfile()">${profile.name}</strong>
-        ${text}
-      </div>
-    `;
-    ul.appendChild(li);
-    input.value = '';
-
-    const count = btn.closest(".card").querySelector(".commentCount");
-    count.innerText = parseInt(count.innerText) + 1;
-  }
-
-  function deletePost(btn) {
-    const post = btn.closest(".card");
-    if (post.getAttribute("data-user") === profile.name) {
-      post.remove();
-    } else {
-      alert("শুধু নিজের পোস্ট ডিলিট করা যাবে।");
+        <div class="counts">
+          👍 <span class="likeCount">${likeCount}</span> | 💬 <span class="commentCount">${commentCount}</span>
+        </div>
+        <div class="action-buttons">
+          <button onclick="likePost(this)">👍 লাইক</button>
+          <button onclick="toggleComments(this)">💬 কমেন্ট</button>
+          <button onclick="alert('শেয়ার করা হয়েছে!')">↗️ শেয়ার</button>
+          <button onclick="deletePost(this)">🗑️ ডিলিট</button>
+        </div>
+        <div class="comments">
+          <div class="comment-box">
+            <img src="${avatar || 'https://via.placeholder.com/30'}" />
+            <input type="text" placeholder="মন্তব্য লিখুন..." />
+            <button onclick="addComment(this)">পোস্ট</button>
+          </div>
+          <ul></ul>
+        </div>
+      `;
+      document.getElementById("postFeed").prepend(post);
     }
-  }
 
-  function viewProfile() {
-    alert("প্রোফাইল ভিউ ফিচার আসছে...");
-  }
+    // লাইক বাটন হ্যান্ডলার
+    function likePost(btn) {
+      const post = btn.closest(".card");
+      const likeCountSpan = post.querySelector(".likeCount");
+      let count = parseInt(likeCountSpan.innerText) || 0;
+      count++;
+      likeCountSpan.innerText = count;
 
-  function followUser(e) {
-    e.stopPropagation();
-    alert("ফলো করা হয়েছে!");
-  }
-</script>
+      // Firebase আপডেট
+      const postKey = post.getAttribute("data-postkey");
+      if (postKey) {
+        db.ref('posts/' + postKey).update({ likeCount: count });
+      }
+    }
+
+    // কমেন্ট টগল
+    function toggleComments(btn) {
+      const post = btn.closest(".card");
+      const comments = post.querySelector(".comments");
+      comments.style.display = comments.style.display === "none" || comments.style.display === "" ? "block" : "none";
+    }
+
+    // কমেন্ট যোগ করা
+    function addComment(btn) {
+      const commentBox = btn.closest(".comment-box");
+      const input = commentBox.querySelector("input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const ul = btn.closest(".comments").querySelector("ul");
+      const post = btn.closest(".card");
+      const postKey = post.getAttribute("data-postkey");
+
+      // নতুন কমেন্ট এলিমেন্ট
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <img src="${profile.avatar || 'https://via.placeholder.com/30'}" onclick="viewProfile()" />
+        <div class="comment-content">
+          <strong onclick="viewProfile()">${profile.name}</strong>
+          ${text}
+        </div>
+      `;
+      ul.appendChild(li);
+      input.value = '';
+
+      // Firebase এ কমেন্ট আপডেট
+      if (postKey) {
+        const commentRef = db.ref('comments/' + postKey);
+        const newCommentKey = commentRef.push().key;
+        const commentData = {
+          user: profile.name,
+          avatar: profile.avatar,
+          text: text,
+          createdAt: new Date().toISOString()
+        };
+        let updates = {};
+        updates[newCommentKey] = commentData;
+        commentRef.update(updates);
+
+        // পোস্টে কমেন্ট কাউন্ট আপডেট
+        const commentCountSpan = post.querySelector(".commentCount");
+        let commentCount = parseInt(commentCountSpan.innerText) || 0;
+        commentCount++;
+        commentCountSpan.innerText = commentCount;
+        db.ref('posts/' + postKey).update({ commentCount: commentCount });
+      }
+    }
+
+    // পোস্ট ডিলিট করা
+    function deletePost(btn) {
+      const post = btn.closest(".card");
+      const userName = post.getAttribute("data-user");
+      const postKey = post.getAttribute("data-postkey");
+      if (userName === profile.name) {
+        if(postKey){
+          db.ref('posts/' + postKey).remove();
+          db.ref('comments/' + postKey).remove();
+        }
+        post.remove();
+      } else {
+        alert("শুধু নিজের পোস্ট ডিলিট করা যাবে।");
+      }
+    }
+
+    function viewProfile() {
+      alert("প্রোফাইল ভিউ ফিচার আসছে...");
+    }
+
+    function followUser(e) {
+      e.stopPropagation();
+      alert("ফলো করা হয়েছে!");
+    }
+
+    // পেজ লোড হলে Firebase থেকে পোস্টগুলো লোড করবো
+    window.onload = function() {
+      const postFeed = document.getElementById('postFeed');
+      db.ref('posts').on('value', snapshot => {
+        postFeed.innerHTML = ''; // পুরনো পোস্ট ডিলিট করে নতুন লোড দিবো
+        const posts = snapshot.val();
+        if (!posts) return;
+        Object.entries(posts).sort((a,b) => new Date(b[1].createdAt) - new Date(a[1].createdAt)).forEach(([key, post]) => {
+          addPost(post.text, post.image, post.createdAt, post.user, post.avatar, post.likeCount || 0, post.commentCount || 0, key);
+          loadComments(key);
+        });
+      });
+    };
+
+    // কমেন্ট লোড ফাংশন
+    function loadComments(postKey) {
+      const post = document.querySelector(`[data-postkey="${postKey}"]`);
+      if (!post) return;
+      const commentList = post.querySelector(".comments ul");
+      const commentBox = post.querySelector(".comments");
+      db.ref('comments/' + postKey).on('value', snapshot => {
+        commentList.innerHTML = '';
+        const comments = snapshot.val();
+        if (!comments) return;
+        Object.values(comments).forEach(comment => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <img src="${comment.avatar || 'https://via.placeholder.com/30'}" onclick="viewProfile()" />
+            <div class="comment-content">
+              <strong onclick="viewProfile()">${comment.user}</strong>
+              ${comment.text}
+            </div>
+          `;
+          commentList.appendChild(li);
+        });
+      });
+    }
+
+  </script>
 </body>
 </html>
