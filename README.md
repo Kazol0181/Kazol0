@@ -1,197 +1,295 @@
-
 <!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>নিহান চৌধুরী</title>
+  <title>Facebook Mobile View Clone</title>
   <style>
+    :root {
+      --bg: #f0f2f5;
+      --text: #000;
+      --card: #fff;
+    }
+
+    body.dark {
+      --bg: #18191a;
+      --text: #e4e6eb;
+      --card: #242526;
+    }
+
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #e5ddd5;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
-    .messenger {
-      max-width: 400px;
-      margin: auto;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background-color: #fff;
-      border: 1px solid #ccc;
-    }
-    .header {
-      background-color: #0084ff;
+
+    .navbar {
+      background-color: #1877f2;
       color: white;
-      padding: 10px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .chat-box {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
+      padding: 10px 16px;
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
-    .message {
-      max-width: 70%;
-      margin: 5px 0;
-      padding: 8px 12px;
-      border-radius: 16px;
-      line-height: 1.4;
+
+    .top-icons {
+      background: var(--card);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      border-bottom: 1px solid #ccc;
+      position: sticky;
+      top: 44px;
+      z-index: 9;
+    }
+
+    .top-icons div {
+      text-align: center;
       font-size: 14px;
     }
-    .incoming {
-      align-self: flex-start;
-      background-color: #f1f0f0;
-    }
-    .outgoing {
-      align-self: flex-end;
-      background-color: #0084ff;
-      color: white;
-    }
-    .footer {
+
+    .story-section {
+      display: flex;
+      overflow-x: auto;
       padding: 10px;
-      border-top: 1px solid #ccc;
+      background-color: var(--card);
+    }
+
+    .story {
+      min-width: 100px;
+      height: 160px;
+      background-color: #ddd;
+      border-radius: 10px;
+      margin-right: 10px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .story::after {
+      content: "Story";
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      font-size: 12px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    .post {
+      background: var(--card);
+      margin: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .post-header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      padding: 10px;
+      justify-content: space-between;
     }
-    .footer input {
-      flex: 1;
-      padding: 8px 10px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      outline: none;
+
+    .post-header-left {
+      display: flex;
+      align-items: center;
     }
-    .footer button {
-      background-color: #0084ff;
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: gray;
+      margin-right: 10px;
+    }
+
+    .post-user {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .follow-btn {
+      background-color: #1877f2;
       color: white;
       border: none;
-      padding: 8px 12px;
-      border-radius: 50%;
-      font-size: 16px;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
       cursor: pointer;
     }
 
-    .typing {
-      display: inline-block;
-      margin: 5px 0;
-      padding: 8px 12px;
-      border-radius: 16px;
-      background-color: #f1f0f0;
-      align-self: flex-start;
+    .post-time {
+      font-size: 10px;
+      color: gray;
+      margin-left: 50px;
+      margin-top: -10px;
+      padding-bottom: 5px;
+    }
+
+    .post-content {
+      padding: 0 10px 10px 10px;
       font-size: 14px;
     }
-    .typing span {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      margin: 0 2px;
-      background-color: #999;
-      border-radius: 50%;
-      animation: blink 1.4s infinite both;
+
+    .post-image {
+      width: 100%;
+      height: auto;
     }
-    .typing span:nth-child(2) {
-      animation-delay: 0.2s;
+
+    .reaction-stats {
+      padding: 0 10px;
+      font-size: 11px;
+      color: #888;
     }
-    .typing span:nth-child(3) {
-      animation-delay: 0.4s;
+
+    .post-actions {
+      display: flex;
+      justify-content: space-around;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      font-size: 14px;
+      color: #555;
     }
-    @keyframes blink {
-      0%, 80%, 100% {
-        opacity: 0;
-      }
-      40% {
-        opacity: 1;
-      }
+
+    .post-actions div {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #000;
+      background: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .comments {
+      display: none;
+      padding: 10px;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin: 60px 0 20px;
+    }
+
+    .toggle-darkmode {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #333;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 20;
     }
   </style>
 </head>
 <body>
-  <div class="messenger">
-    <div class="header">নিহান চৌধুরী</div>
-    <div class="chat-box" id="chat-box"></div>
-    <div class="footer">
-      <input type="text" id="userInput" placeholder="Type a message...">
-      <button onclick="sendMessage()">➤</button>
-    </div>
+
+  <div class="toggle-darkmode" onclick="toggleDarkMode()">Dark Mode</div>
+
+  <div class="navbar">
+    <div>facebook</div>
+    <div>বন্ধু</div>
   </div>
 
+  <div class="top-icons">
+    <div>Home</div>
+    <div>Message</div>
+    <div>Notification</div>
+    <div>Profile</div>
+  </div>
+
+  <div class="story-section">
+    <div class="story"></div>
+    <div class="story"></div>
+    <div class="story"></div>
+    <div class="story"></div>
+  </div>
+
+  <div id="posts"></div>
+
+  <div class="post">
+    <div class="post-header">
+      <div class="post-header-left">
+        <div class="avatar"></div>
+        <div class="post-user">Friend Suggestion</div>
+      </div>
+    </div>
+    <div class="post-content">আপনি "ইমরান খান" কে চেনেন? <br><br><button>Add Friend</button></div>
+  </div>
+
+  <div class="footer">ডেমো ফেসবুক ভিউ - শুধুমাত্র দেখার জন্য</div>
+
   <script>
-    const botData = {
-      "নাম": "আমার নাম নিহান । ",
-      "কি কর": "আমি এখন মোবাইলে গেমখেলি",
-      "থাকো": "আমি ঢাকা মহাখালী থাকি।",
-      "মা": "তুমি কি আমার পরিবার নিয়ে জানতে চাও ?!",
-      "ধন্যবাদ": "তোমাকেও ধন্যবাদ। তোমার সাথে কথা বলে ভালো লাগছে।",
-      "ভালো": "আমি ভালো আছি। তুমি কেমন আছ?",
-      "তুমি কে": "আমি এক ডিজিটাল বন্ধু, যার নাম নিহান।"
-    };
-
-    function getBotReply(userMessage) {
-      userMessage = userMessage.toLowerCase();
-      for (let key in botData) {
-        if (userMessage.includes(key)) {
-          return botData[key];
-        }
-      }
-
-      if (userMessage.match(/তোমার.*নাম|তুমি.*কে/)) return botData["নাম"];
-      if (userMessage.match(/কর|কি.*কর/)) return botData["কি কর"];
-      if (userMessage.match(/থাকো|বাড়ি|কোথায়/)) return botData["থাকো"];
-      if (userMessage.match(/মা|চুরি/)) return botData["মা"];
-      if (userMessage.match(/ধন্যবাদ|শুভেচ্ছা/)) return botData["ধন্যবাদ"];
-      if (userMessage.match(/ভালো|কেমন/)) return botData["ভালো"];
-
-      return "Hmm";
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
     }
 
-    function showMessage(text, type) {
-      const chatBox = document.getElementById("chat-box");
-      const messageDiv = document.createElement("div");
-      messageDiv.className = type + " message";
-      messageDiv.textContent = text;
-      chatBox.appendChild(messageDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
+    function toggleComments(button) {
+      const post = button.closest('.post');
+      const comments = post.querySelector('.comments');
+      comments.style.display = (comments.style.display === 'block') ? 'none' : 'block';
     }
 
-    function sendMessage() {
-      const inputField = document.getElementById("userInput");
-      const message = inputField.value.trim();
-      if (message === "") return;
+    const names = [
+      "আরিয়ান হোসেন", "তানভীর ইসলাম", "নিহান রহমান", "ইভান আলম", "শিহাব চৌধুরী",
+      "রায়ান কবির", "জায়ান মাহমুদ", "তাজওয়ার আহমেদ", "রিদান সিদ্দিকী", "সায়ান জামান",
+      "আফনান খন্দকার", "জিয়ান হাসান", "সাবিহ আনোয়ার", "আর্শ রহমান", "মাহের ইমতিয়াজ",
+      "নেহান হক", "ইউসুফ আদনান", "রাফেদ আশফাক", "অয়ন মোবারক", "মিরাজ তাহমিদ",
+      "ইশরাক হোসাইন", "নিহান বাবু"
+    ];
 
-      showMessage(message, "outgoing");
-      inputField.value = "";
+    const postsContainer = document.getElementById('posts');
+    for (let i = 0; i < names.length; i++) {
+      const post = document.createElement('div');
+      post.className = 'post';
+      const likes = Math.floor(Math.random() * 200);
+      const commentsCount = Math.floor(Math.random() * 100);
+      const shares = Math.floor(Math.random() * 50);
+      const minutesAgo = Math.floor(Math.random() * 59) + 1;
 
-      const chatBox = document.getElementById("chat-box");
+      const userName = names[i];
+      const postImage = (userName === "নিহান বাবু")
+        ? '<div class="post-image"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi6Sh7_ja2k2Hw6kmLqfWolMbuUlHkgZ8MnjDz-pYOeZaTEslIbYHeU89k1shSHl15_q_8hktuu2S29Jx9RUjSkynibzNtMk0ZqrT0xA4_FazGdUbNyECH5PQEZn6ofop3vkyKH90lAWs8DF_wtpHBpFwG4F_7nG4vpe63GGLFmPYtDH3d4CKlE6vFTc-Y/s200/1747369246868.jpg" style="width:100%; height:auto;" /></div>'
+        : '<div class="post-image"></div>';
 
-      // Step 1: Wait 5 seconds before showing typing animation
-      setTimeout(() => {
-        const typingDiv = document.createElement("div");
-        typingDiv.className = "typing";
-        typingDiv.id = "typing-indicator";
-        typingDiv.innerHTML = "<span></span><span></span><span></span>";
-        chatBox.appendChild(typingDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        // Step 2: After another 5 seconds, show reply
-        setTimeout(() => {
-          const reply = getBotReply(message);
-          const typingEl = document.getElementById("typing-indicator");
-          if (typingEl) typingEl.remove();
-          showMessage(reply, "incoming");
-        }, 5000); // Show reply after typing for 5 seconds
-      }, 5000); // Wait 5 seconds before typing starts
+      post.innerHTML = `
+        <div class="post-header">
+          <div class="post-header-left">
+            <div class="avatar"></div>
+            <div class="post-user">${userName}</div>
+          </div>
+          <button class="follow-btn">Follow</button>
+        </div>
+        <div class="post-time">${minutesAgo} minutes ago</div>
+        <div class="post-content">আজকের দিনটা ভালো যাচ্ছে।</div>
+        ${postImage}
+        <div class="reaction-stats">${likes} Likes · ${commentsCount} Comments · ${shares} Shares</div>
+        <div class="post-actions">
+          <div>Like</div>
+          <div onclick="toggleComments(this)">Comment</div>
+          <div>Share</div>
+        </div>
+        <div class="comments">
+          <strong>মন্তব্য ১:</strong> দারুন লাগছে!<br>
+          <strong>মন্তব্য ২:</strong> একদম সত্যি কথা।
+        </div>
+      `;
+      postsContainer.appendChild(post);
     }
-
-    window.onload = function () {
-      setTimeout(() => {
-        showMessage("কেমন আছ? আমার সাথে কথা বলতে চাইলে নিচে দেখ মেসেজ পাঠানোর অপশন আছে । বাংলায় লিখ ", "incoming");
-      }, 1000);
-    };
   </script>
 </body>
 </html>
-
